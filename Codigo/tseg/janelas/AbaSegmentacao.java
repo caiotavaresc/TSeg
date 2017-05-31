@@ -35,9 +35,15 @@ public class AbaSegmentacao {
 
 		abaSegmentacao = new JPanel();
 		abaSegmentacao.setLayout(new BorderLayout());
-		abaSegmentacao.add(pnlBotoes, BorderLayout.NORTH);
+		//abaSegmentacao.add(pnlBotoes, BorderLayout.NORTH);
 		abaSegmentacao.add(spnlSegmentacao, BorderLayout.CENTER);
 	}
+        
+        public JTextPane getTxpSegmentacao()
+        {
+            return this.txpSegmentacao;
+        }
+                
 
 	public JPanel getAbaSegmentacao() {
 		return abaSegmentacao;

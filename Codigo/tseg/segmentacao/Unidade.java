@@ -2,6 +2,7 @@ package tseg.segmentacao;
 
 public class Unidade implements Comparable<Unidade> {
 	private String identificador;
+        private String identificadorGeral;
 	private int posicao;
 
 	public String getIdentificador() {
@@ -10,6 +11,14 @@ public class Unidade implements Comparable<Unidade> {
 
 	public void setIdentificador(String identificador) {
 		this.identificador = identificador;
+	}
+        
+	public String getIdentificadorGeral() {
+		return identificadorGeral;
+	}
+
+	public void setIdentificadorGeral(String identificadorGeral) {
+		this.identificadorGeral = identificadorGeral;
 	}
 
 	public int getPosicao() {
@@ -37,6 +46,7 @@ public class Unidade implements Comparable<Unidade> {
 		Unidade unidade = new Unidade();
 		unidade.setIdentificador(identificador);
 		unidade.setPosicao(posicao);
+                unidade.setIdentificadorGeral(identificadorGeral);
 
 		return unidade;
 	}

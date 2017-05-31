@@ -2,29 +2,37 @@ package tseg.acoes;
 
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 import tseg.arquivo.FiltroArquivo;
 import tseg.arquivo.FiltroExtencoes;
@@ -32,6 +40,9 @@ import tseg.arquivo.TratamentoArquivo;
 import tseg.segmentacao.SegmentadorAutomatico;
 import tseg.configuracoes.Configuracoes;
 import tseg.controle.Controle;
+import tseg.segmentacao.GerenciadorAcoes;
+import tseg.segmentacao.SegmentadorManual;
+import tseg.segmentacao.SegmentadorUtil;
 
 public class AcaoJanelaPrincipal {
 
@@ -61,12 +72,18 @@ public class AcaoJanelaPrincipal {
 					if (retornoFc == JFileChooser.APPROVE_OPTION) {
 						String textoArquivo;
 						try {
-							textoArquivo = arquivo.leArquivo(fc
-									.getSelectedFile());
+                                                        File arquivoT = fc.getSelectedFile();
+							textoArquivo = arquivo.leArquivo(arquivoT);
 
 							Controle.getJanelaPrincipal().getAbaSegmentaca()
 									.setTextoTxaSegmentacao(textoArquivo);
+                                                        
+                                                        //Alterar o titulo da janela
+                                                        Controle.getJanelaPrincipal().alterarTituloJanela("T-Seg - " + arquivoT.getAbsolutePath());
 
+                                                        //Limpar o contexto
+                                                        GerenciadorAcoes.limparContexto();
+                                                        
 							Controle.getJanelaPrincipal().getAbaEstatisticas()
 									.atualizaEstatisticas();
 
@@ -179,6 +196,144 @@ public class AcaoJanelaPrincipal {
 			};
 		};
         }
+        
+        public ActionListener itemSegmentacaoAutomaticaPalavras() {
+		return new ActionListener() {
+
+			@Override
+                        public void actionPerformed(ActionEvent evt) {
+                                SegmentadorAutomatico segmentador = new SegmentadorAutomatico();
+                                String texto = Controle.getJanelaPrincipal()
+                                                .getAbaSegmentaca().getTextoTxaSegmentacao();
+
+                                texto = segmentador.segmenta(texto,
+                                                SegmentadorAutomatico.PALAVRAS);
+
+                                Controle.getJanelaPrincipal().getAbaSegmentaca()
+                                                .setTextoTxaSegmentacao(texto);
+                        }
+		};
+	}
+        
+        public ActionListener itemSegmentacaoAutomaticaSentencas() {
+		return new ActionListener() {
+
+			@Override
+                        public void actionPerformed(ActionEvent evt) {
+                                SegmentadorAutomatico segmentador = new SegmentadorAutomatico();
+                                String texto = Controle.getJanelaPrincipal()
+                                                .getAbaSegmentaca().getTextoTxaSegmentacao();
+
+                                texto = segmentador.segmenta(texto,
+                                                SegmentadorAutomatico.SENTENCAS);
+
+                                Controle.getJanelaPrincipal().getAbaSegmentaca()
+                                                .setTextoTxaSegmentacao(texto);
+                        }
+		};
+	}
+                
+        public ActionListener itemSegmentacaoAutomaticaParagrafos() {
+		return new ActionListener() {
+
+			@Override
+                        public void actionPerformed(ActionEvent evt) {
+                                SegmentadorAutomatico segmentador = new SegmentadorAutomatico();
+                                String texto = Controle.getJanelaPrincipal()
+                                                .getAbaSegmentaca().getTextoTxaSegmentacao();
+
+                                texto = segmentador.segmenta(texto,
+                                                SegmentadorAutomatico.PARAGRAGOS);
+
+                                Controle.getJanelaPrincipal().getAbaSegmentaca()
+                                                .setTextoTxaSegmentacao(texto);
+                        }
+		};
+	}
+        
+        public ActionListener itemDefinirNovaUnidade(JTextPane txpSegmentacao, boolean independente){
+         
+            return new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        
+                            //Verificar se o lugar onde estou tentando definir uma unidade, é um fragmento de unidade
+                            int selecaoInicio = txpSegmentacao.getSelectionStart();
+                            int selecaoFim = txpSegmentacao.getSelectionEnd();
+                            
+                            if  (      !(
+                                            SegmentadorUtil.verificaForaDeTag(selecaoInicio, selecaoFim) && 
+                                            SegmentadorUtil.verificaForaTagDocument(selecaoInicio, selecaoFim)
+                                        )
+                                )
+                            {
+                                //Mensagem de erro
+                                String message;
+                                if (tseg.janelas.JanelaPrincipal.portugues)
+                                        message = "Você está tentando estabelecer uma unidade dentro da Tag de uma Unidade. Isso não é possível!";
+                                else
+                                        message = "You're trying to establish a unit within the tag of a unit. This is not possible!";
+                                JOptionPane.showMessageDialog(null, message,
+                                                "Ops!", JOptionPane.WARNING_MESSAGE);
+                                
+                                return;
+                            }
+                        
+                            SegmentadorManual segmentador = new SegmentadorManual();
+
+                            String texto = Controle.getJanelaPrincipal()
+                                            .getAbaSegmentaca().getTextoTxaSegmentacao();
+
+                            texto = segmentador.segmenta(txpSegmentacao, independente);
+
+                            Controle.getJanelaPrincipal().getAbaSegmentaca()
+                                            .setTextoTxaSegmentacao(texto);
+
+                    }
+            };
+            
+        }
+        
+        public ActionListener itemRemoverTodasUnidades()
+        {
+            return new ActionListener() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent arg0) {
+                            String msg, title;
+                            if (tseg.janelas.JanelaPrincipal.portugues)
+                            {
+                                    msg = "Tem certeza que deseja remover todas as Unidades?";
+                                    title = "Aviso";
+                            }
+                            else
+                            {
+                                    msg = "Are you sure you want to remove all the units?";
+                                    title = "Warning";
+                            }
+                            int confirmDialog = JOptionPane
+                                            .showConfirmDialog(
+                                                            null, msg, title,
+                                                            JOptionPane.YES_NO_OPTION);
+
+                            if (confirmDialog == JOptionPane.YES_OPTION) {
+                                    SegmentadorManual segmentador = new SegmentadorManual();
+                                    String texto = Controle
+                                                    .getJanelaPrincipal()
+                                                    .getAbaSegmentaca()
+                                                    .getTextoTxaSegmentacao();
+
+                                    texto = segmentador
+                                                    .removeTodasUnidades(texto);
+
+                                    Controle.getJanelaPrincipal()
+                                                    .getAbaSegmentaca()
+                                                    .setTextoTxaSegmentacao(texto);
+                            }
+                    }
+            };
+        }
 
 	public ActionListener itemSalvar() {
 		return new ActionListener() {
@@ -257,9 +412,54 @@ public class AcaoJanelaPrincipal {
 				File pdf = new File("Manual do Usuario.pdf");  
 				try {  
 				  Desktop.getDesktop().open(pdf);  
-				} catch(Exception ex) {  
-				  ex.printStackTrace();  
-				  JOptionPane.showMessageDialog(null, "Erro no Desktop: " + ex);  
+				}
+                                catch (IllegalArgumentException ex)
+                                {
+                                    try
+                                    {
+                                        // for copying style
+                                        JLabel label = new JLabel();
+                                        Font font = label.getFont();
+
+                                        // create some css from the label's font
+                                        StringBuffer style = new StringBuffer("font-family:" + font.getFamily() + ";");
+                                        style.append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";");
+                                        style.append("font-size:" + font.getSize() + "pt;");
+                                        
+                                        String mensagem = "<html><body style=\"" + style + "\">Não foi possível localizar o manual neste computador. Faça downoad clicando <a href='http://www.each.usp.br/norton/resdial/tools/TSeg_v1.0.zip'>aqui</a>.</body></html>";                                     
+                                        JEditorPane je = new JEditorPane();
+                                        je.setEditorKit(JEditorPane.createEditorKitForContentType("text/html"));
+                                        je.setText(mensagem);
+                                        je.setBackground(label.getBackground());
+                                        je.setEditable(false);
+                                        
+                                        //Criar o manipulador de Hyperlink
+                                        je.addHyperlinkListener(new HyperlinkListener() {
+                                            public void hyperlinkUpdate(HyperlinkEvent e) {
+                                                if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                    if(Desktop.isDesktopSupported()) {
+                                                        try {
+                                                            Desktop.getDesktop().browse(e.getURL().toURI());
+                                                        } catch (Exception ex3) {
+                                                            //Exceção disparada se a plataforma computacional não tiver navegador
+                                                            ex3.printStackTrace();
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        });
+                                        
+                                        JOptionPane.showMessageDialog(null, je);
+                                    }
+                                    catch(Exception ex2)
+                                    {
+                                        ex2.printStackTrace();  
+                                        JOptionPane.showMessageDialog(null, "Erro no Desktop: " + ex2);  
+                                    }
+                                }
+                                catch(Exception ex) {  
+                                    ex.printStackTrace();  
+                                    JOptionPane.showMessageDialog(null, "Erro no Desktop: " + ex);  
 				}  
 			}
 		};
@@ -383,7 +583,7 @@ public class AcaoJanelaPrincipal {
 				}
 				else
 				{
-					janelaCor.setTitle("Colors - Texts Segmented");
+					janelaCor.setTitle("Colors - Segmented Texts");
 				}
 				janelaCor.setResizable(false);
 				janelaCor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -412,7 +612,7 @@ public class AcaoJanelaPrincipal {
 				}
 				else
 				{
-					janelaCor.setTitle("Colors -  Units Independent");
+					janelaCor.setTitle("Colors - Independent Units");
 				}
 				janelaCor.setResizable(false);
 				janelaCor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -438,11 +638,11 @@ public class AcaoJanelaPrincipal {
 				JFrame janelaCor = new JFrame();
 				if (tseg.janelas.JanelaPrincipal.portugues)
 				{
-					janelaCor.setTitle("Cores -  Unidades Independentes");
+					janelaCor.setTitle("Cores - Unidades Independentes");
 				}
 				else
 				{
-					janelaCor.setTitle("Colors -  Units Independent");
+					janelaCor.setTitle("Colors - Independent Units");
 				}
 				janelaCor.setResizable(false);
 				janelaCor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -563,6 +763,26 @@ public class AcaoJanelaPrincipal {
 
 			new TratamentoArquivo().gravaArquivo(selectedFile, textoSegmentado);
 		}
+	}
+        
+        public ActionListener itemDesfazer() {
+		return new ActionListener() {
+
+			@Override
+                        public void actionPerformed(ActionEvent evt) {
+                                GerenciadorAcoes.desfazer();
+                        }
+		};
+	}
+        
+        public ActionListener itemRefazer() {
+		return new ActionListener() {
+
+			@Override
+                        public void actionPerformed(ActionEvent evt) {
+                                GerenciadorAcoes.refazer();
+                        }
+		};
 	}
 
 	private JFileChooser getFileChooserCustomizado() {

@@ -32,4 +32,8 @@ public class Controle {
 		return modificado;
 	}
 
+        public static void setControladorUnidades(ControladorUnidades controlador)
+        {
+            Controle.controladorUnidades = controlador;
+        }
 }

@@ -23,7 +23,7 @@ public class SegmentadorUtil {
 				+ listaNovasUnidades.get(1).getIdentificador().length() + 1);
 	}
 
-	public boolean verificaForaDeTag(int selecaoInicio, int selecaoFim) {
+	public static boolean verificaForaDeTag(int selecaoInicio, int selecaoFim) {
 		ControladorUnidades controladorUnidades = Controle
 				.getControladorUnidades();
 		ArrayList<Unidade> unidadesInicio = controladorUnidades
@@ -64,5 +64,28 @@ public class SegmentadorUtil {
 
 		return true;
 	}
+        
+        public static boolean verificaForaTagDocument(int selecaoInicio, int selecaoFim) {
+                String texto = Controle.getJanelaPrincipal().getAbaSegmentaca()
+                                .getTextoTxaSegmentacao();
+
+                ControladorUnidades controladorUnidades = Controle
+                                .getControladorUnidades();
+
+                String tagDocumentInicio = controladorUnidades
+                                .getTagDocumentInicio();
+                String tagDocumentFim = controladorUnidades.getTagDocumentFim();
+
+                if ((selecaoInicio < tagDocumentInicio.length() + 1)
+                                || (selecaoInicio > texto.length()
+                                                - tagDocumentFim.length() - 1)) {
+                        return false;
+                }
+
+                if (selecaoFim > texto.length() - tagDocumentFim.length() - 1) {
+                        return false;
+                }
+                return true;
+        }
 
 }

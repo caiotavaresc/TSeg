@@ -26,6 +26,9 @@ import tseg.segmentacao.SegmentadorUtil;
 import tseg.segmentacao.Unidade;
 
 public class AcaoAbaSegmentacao {
+    
+        private AcaoJanelaPrincipal acao = new AcaoJanelaPrincipal();
+    
 	public ActionListener btnSegmentacaoAutomaticaActionListener() {
 		return new ActionListener() {
 
@@ -206,28 +209,8 @@ public class AcaoAbaSegmentacao {
 				}
 			}
 
-			private boolean verificaForaTagDocument(int selecaoInicio,
-					int selecaoFim) {
-				String texto = Controle.getJanelaPrincipal().getAbaSegmentaca()
-						.getTextoTxaSegmentacao();
-
-				ControladorUnidades controladorUnidades = Controle
-						.getControladorUnidades();
-
-				String tagDocumentInicio = controladorUnidades
-						.getTagDocumentInicio();
-				String tagDocumentFim = controladorUnidades.getTagDocumentFim();
-
-				if ((selecaoInicio < tagDocumentInicio.length() + 1)
-						|| (selecaoInicio > texto.length()
-								- tagDocumentFim.length() - 1)) {
-					return false;
-				}
-
-				if (selecaoFim > texto.length() - tagDocumentFim.length() - 1) {
-					return false;
-				}
-				return true;
+			private boolean verificaForaTagDocument(int selecaoInicio, int selecaoFim) {
+                            return SegmentadorUtil.verificaForaTagDocument(selecaoInicio, selecaoFim);
 			}
 
 			private JMenuItem montaItemEditarID(final int selecaoInicio,
@@ -334,21 +317,7 @@ public class AcaoAbaSegmentacao {
 			}
 
 			private boolean isUnidade(int selecaoInicio, int selecaoFim) {
-				ControladorUnidades controladorUnidades = Controle
-						.getControladorUnidades();
-
-				ArrayList<Unidade> unidades = controladorUnidades.getUnidades();
-
-				for (Unidade unidade : unidades) {
-					int fimUnidade = unidade.getPosicao()
-							+ unidade.getIdentificador().length();
-
-					if ((selecaoInicio > unidade.getPosicao())
-							&& (selecaoFim < fimUnidade)) {
-						return true;
-					}
-				}
-				return false;
+				return ControladorUnidades.isUnidade(selecaoInicio, selecaoFim);
 			}
 
 			private JMenuItem montaMenuItemUnidade(
@@ -356,11 +325,11 @@ public class AcaoAbaSegmentacao {
 				JMenuItem menuItemUnidade = new JMenuItem();
 				if (tseg.janelas.JanelaPrincipal.portugues)
 				{
-					menuItemUnidade.setText("Unidade");
+					menuItemUnidade.setText("Definir nova unidade");
 				}
 				else
 				{
-					menuItemUnidade.setText("Unit");
+					menuItemUnidade.setText("Define new unit");
 				}
 				menuItemUnidade.addActionListener(new ActionListener() {
 
@@ -387,11 +356,11 @@ public class AcaoAbaSegmentacao {
 				JMenuItem itemUnidadeIndependente;
 				if (tseg.janelas.JanelaPrincipal.portugues)
 				{
-					itemUnidadeIndependente = new JMenuItem("Unidade Independente");
+					itemUnidadeIndependente = new JMenuItem("Definir nova unidade independente");
 				}
 				else
 				{
-					itemUnidadeIndependente = new JMenuItem("Independent Units");
+					itemUnidadeIndependente = new JMenuItem("Define new independent unit");
 				}
 				itemUnidadeIndependente.addActionListener(new ActionListener() {
 
@@ -427,6 +396,14 @@ public class AcaoAbaSegmentacao {
 				ArrayList<Unidade> unidades = new ArrayList<Unidade>();
 
 				for (Unidade unidadeList : list) {
+                                    
+                                        JTextPane txpSegmentacao = Controle.getJanelaPrincipal().getAbaSegmentaca().getTxpSegmentacao();
+                                        int selecaoInicio = txpSegmentacao.getSelectionStart();
+                                        int selecaoFim = txpSegmentacao.getSelectionEnd();
+                                    
+                                        //Antes de tentar inserir, fazer uma validação se a unidade se aplica à área clicada
+                                        boolean valido = ControladorUnidades.unidadeEstaContida(selecaoInicio, selecaoFim, unidadeList);
+                                    
 					boolean existe = false;
 					for (Unidade unidade : unidades) {
 						if (unidadeList.getIdentificador().equals(
@@ -435,7 +412,7 @@ public class AcaoAbaSegmentacao {
 						}
 					}
 
-					if (!(existe)) {
+					if (!(existe) && valido) {
 						unidades.add(unidadeList);
 					}
 				}
@@ -448,6 +425,10 @@ public class AcaoAbaSegmentacao {
 						menuRemoverUnidade.add(itemUnidade);
 					}
 				}
+                                
+                                //Se não houver unidades a remover - desabilitar
+                                if(unidades.size()==0)
+                                    menuRemoverUnidade.setEnabled(false);
 
 				return menuRemoverUnidade;
 			}
@@ -483,7 +464,7 @@ public class AcaoAbaSegmentacao {
 									.getTextoTxaSegmentacao();
 
 							texto = segmentador.removeUnidade(texto,
-									identificador);
+									identificador, false);
 
 							Controle.getJanelaPrincipal().getAbaSegmentaca()
 									.setTextoTxaSegmentacao(texto);
@@ -499,50 +480,15 @@ public class AcaoAbaSegmentacao {
 				if (tseg.janelas.JanelaPrincipal.portugues)
 				{	
 					itemRemoverTodasUnidades = new JMenuItem(
-							"Remover todas as Unidades");
+							"Remover todas as unidades");
 				}
 				else
 				{
 					itemRemoverTodasUnidades = new JMenuItem(
-							"Remove all Units");
+							"Remove all units");
 				}
 				itemRemoverTodasUnidades
-						.addActionListener(new ActionListener() {
-
-							@Override
-							public void actionPerformed(ActionEvent arg0) {
-								String msg, title;
-								if (tseg.janelas.JanelaPrincipal.portugues)
-								{
-									msg = "Tem certeza que deseja remover todas as Unidades?";
-									title = "Aviso";
-								}
-								else
-								{
-									msg = "Are you sure you want to remove all the units?";
-									title = "Warning";
-								}
-								int confirmDialog = JOptionPane
-										.showConfirmDialog(
-												null, msg, title,
-												JOptionPane.YES_NO_OPTION);
-
-								if (confirmDialog == JOptionPane.YES_OPTION) {
-									SegmentadorManual segmentador = new SegmentadorManual();
-									String texto = Controle
-											.getJanelaPrincipal()
-											.getAbaSegmentaca()
-											.getTextoTxaSegmentacao();
-
-									texto = segmentador
-											.removeTodasUnidades(texto);
-
-									Controle.getJanelaPrincipal()
-											.getAbaSegmentaca()
-											.setTextoTxaSegmentacao(texto);
-								}
-							}
-						});
+						.addActionListener(acao.itemRemoverTodasUnidades());
 
 				return itemRemoverTodasUnidades;
 			}

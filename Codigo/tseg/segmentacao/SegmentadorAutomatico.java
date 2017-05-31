@@ -13,6 +13,10 @@ public class SegmentadorAutomatico {
 	public static int PARAGRAGOS = 3;
 
 	public String segmenta(String texto, int tipoSegmentacao) {
+            
+                //Antes de adicionar uma unidade, guardar o contexto
+                GerenciadorAcoes.guardarContexto();
+            
 		if (tipoSegmentacao == PALAVRAS) {
 			texto = segmentaPalavras(texto);
 		} else {

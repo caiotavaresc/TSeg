@@ -5,7 +5,7 @@ import java.util.Collections;
 
 import tseg.controle.Controle;
 
-public class ControladorUnidades {
+public class ControladorUnidades{
 	private ArrayList<Unidade> unidadesInicio = new ArrayList<Unidade>();
 	private ArrayList<Unidade> unidadesFim = new ArrayList<Unidade>();
 	private ArrayList<Unidade> unidadesRemovidas = new ArrayList<Unidade>();
@@ -22,20 +22,23 @@ public class ControladorUnidades {
 			boolean independente) {
 		ArrayList<Unidade> inicioFim = new ArrayList<Unidade>();
 
-		String unidade;
+		String unidade, identificadorGeral;
 		if (independente) {
 			unidade = criaUnidadeIndependente();
 		} else {
 			unidade = criaUnidade();
 		}
-
+                identificadorGeral = unidade;
+                
 		Unidade novaUnidadeInicio = new Unidade();
 		novaUnidadeInicio.setIdentificador(unidade);
+                novaUnidadeInicio.setIdentificadorGeral(identificadorGeral);
 		novaUnidadeInicio.setPosicao(selecaoInicio);
 
 		unidade = "</" + unidade.substring(1);
 		Unidade novaUnidadeFim = new Unidade();
 		novaUnidadeFim.setIdentificador(unidade);
+                novaUnidadeFim.setIdentificadorGeral(identificadorGeral);
 		novaUnidadeFim.setPosicao(selecaoFim);
 
 		unidadesInicio.add(novaUnidadeInicio);
@@ -68,8 +71,8 @@ public class ControladorUnidades {
 
 			return identificador.toString();
 		} else {
-			return "<UNIT " + identificadorSobreposicao + "id='"
-					+ geraIdUnidade() + "'>";
+			return "<UNIT " + identificadorSobreposicao + "id=\""
+					+ geraIdUnidade() + "\">";
 		}
 	}
 
@@ -81,6 +84,7 @@ public class ControladorUnidades {
 		Unidade unidade = unidadesInicio.get(unidadesInicio.size() - 1);
 
 		String identificador = unidade.getIdentificador();
+                
 		int id = Integer
 				.parseInt(identificador.substring(
 						identificador.indexOf("\"") + 1,
@@ -205,7 +209,7 @@ public class ControladorUnidades {
 		unidadesRemovidas.clear();
 
 		for (int i = 0; i < texto.length();) {
-			int inicioUnidade = texto.indexOf("<UNIT", i);
+			int inicioUnidade = texto.indexOf("<unit", i);
 			int fimUnidade = texto.indexOf('>', inicioUnidade) + 1;
 
 			if (inicioUnidade > -1) {
@@ -214,6 +218,8 @@ public class ControladorUnidades {
 				unidade.setIdentificador(texto.substring(inicioUnidade,
 						fimUnidade));
 				unidade.setPosicao(inicioUnidade);
+                                unidade.setIdentificadorGeral(texto.substring(inicioUnidade,
+						fimUnidade));
 				unidadesInicio.add(unidade);
 
 				i = fimUnidade;
@@ -223,7 +229,7 @@ public class ControladorUnidades {
 		}
 
 		for (int i = 0; i < texto.length();) {
-			int inicioUnidade = texto.indexOf("</UNIT", i);
+			int inicioUnidade = texto.indexOf("</unit", i);
 			int fimUnidade = texto.indexOf('>', inicioUnidade) + 1;
 
 			if (inicioUnidade > -1) {
@@ -232,6 +238,11 @@ public class ControladorUnidades {
 				unidade.setIdentificador(texto.substring(inicioUnidade,
 						fimUnidade));
 				unidade.setPosicao(inicioUnidade);
+                                
+                                //Montar o identificador geral
+                                String identificadorGeral = "<" + unidade.getIdentificador().substring(2);
+                                unidade.setIdentificadorGeral(identificadorGeral);
+                                
 				unidadesFim.add(unidade);
 
 				i = fimUnidade;
@@ -248,12 +259,13 @@ public class ControladorUnidades {
 			Unidade unidade = unidadesInicio.get(unidadesInicio.size() - 1);
 			String identificador = unidade.getIdentificador();
 			int ultimoID = Integer.parseInt(identificador.substring(
-					identificador.indexOf("'") + 1,
-					identificador.lastIndexOf("'")));
+					identificador.indexOf("\"") + 1,
+					identificador.lastIndexOf("\"")));
 
 			for (int i = 0; i < ultimoID; i++) {
 				Unidade unidade2 = new Unidade();
-				unidade2.setIdentificador("<UNIT id='" + i + "'>");
+				unidade2.setIdentificador("<unit id=\"" + i + "\">");
+                                unidade2.setIdentificadorGeral("<unit id=\"" + i + "\">");
 				listDeletadas.add(unidade2);
 			}
 
@@ -457,5 +469,82 @@ public class ControladorUnidades {
 	public String getIdentificadorSobreposicao() {
 		return identificadorSobreposicao;
 	}
+        
+        public static boolean unidadeEstaContida(int selecaoInicio, int selecaoFim, Unidade unidadeInicio)
+        {            
+            //Achar a unidade "fim" correspondente
+            int i, inicioUnid, fimUnid;
+            ArrayList<Unidade> myUnidadesFim;
+            Unidade unidadeFim = null;
+            
+            myUnidadesFim = Controle.getControladorUnidades().unidadesFim;
+            
+            for(i=0;i<myUnidadesFim.size();i++)
+                if(unidadeInicio.getIdentificadorGeral().equals(myUnidadesFim.get(i).getIdentificadorGeral()))
+                {
+                    unidadeFim = myUnidadesFim.get(i);
+                    break;
+                }
+            
+            if(unidadeFim!=null)
+            {
+                inicioUnid = unidadeInicio.getPosicao();
+                fimUnid = unidadeFim.getPosicao() + unidadeFim.getIdentificador().length();
+
+                if(selecaoInicio > inicioUnid && selecaoInicio < fimUnid)
+                    return true;
+
+                if(selecaoFim > inicioUnid && selecaoFim < fimUnid)
+                    return true;
+                
+                if(inicioUnid >= selecaoInicio && inicioUnid <= selecaoFim)
+                    return true;
+                
+                if(fimUnid >= selecaoInicio && fimUnid <= selecaoFim)
+                    return true;
+            }
+            
+            return false;
+        }
+        
+        public static boolean isUnidade(int selecaoInicio, int selecaoFim){
+            ArrayList<Unidade> unidades = Controle.getControladorUnidades().getUnidades();
+
+            for (Unidade unidade : unidades) {
+                    int fimUnidade = unidade.getPosicao()
+                                    + unidade.getIdentificador().length();
+
+                    if ((selecaoInicio > unidade.getPosicao())
+                                    && (selecaoFim < fimUnidade)) {
+                            return true;
+                    }
+            }
+            return false;
+        }
+        
+    public ControladorUnidades clone()
+    {
+        ControladorUnidades clone = new ControladorUnidades();
+        clone.unidadesInicio = (ArrayList<Unidade>) this.cloneArrayList(unidadesInicio);
+        clone.unidadesFim = (ArrayList<Unidade>) this.cloneArrayList(unidadesFim);
+        clone.unidadesRemovidas = (ArrayList<Unidade>) this.cloneArrayList(unidadesRemovidas);
+        clone.identificadorSobreposicao = String.valueOf(this.identificadorSobreposicao);
+        clone.tagDocumentInicio = String.valueOf(this.tagDocumentInicio);
+        clone.tagDocumentFim = String.valueOf(this.tagDocumentFim);
+        
+        return clone;
+    }
+    
+    private ArrayList<Unidade> cloneArrayList(ArrayList<Unidade> entrada)
+    {
+        ArrayList<Unidade> retorno = new ArrayList<Unidade>();
+        
+        int i;
+        
+        for(i=0;i<entrada.size();i++)
+            retorno.add(entrada.get(i).clone());
+        
+        return retorno;
+    }
 
 }

@@ -6,91 +6,69 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import tseg.arquivo.TratamentoArquivo;
+import tseg.janelas.ModalProgressoSegmentacao;
+import tseg.janelas.ModalSegmentarDiretorio;
 
 public class SegmentadorAutomatico {
 	public static int PALAVRAS = 1;
 	public static int SENTENCAS = 2;
 	public static int PARAGRAGOS = 3;
 
-	public String segmenta(String texto, int tipoSegmentacao) {
+	public String segmenta(String texto, int tipoSegmentacao, ModalProgressoSegmentacao modal) {
             
                 //Antes de adicionar uma unidade, guardar o contexto
                 GerenciadorAcoes.guardarContexto();
             
 		if (tipoSegmentacao == PALAVRAS) {
-			texto = segmentaPalavras(texto);
+			texto = segmentaPalavras(texto, modal);
 		} else {
 			if (tipoSegmentacao == SENTENCAS) {
-				texto = segmentaSentencas(texto);
+				texto = segmentaSentencas(texto, modal);
 			} else {
-				texto = segmentaParagrafos(texto);
+				texto = segmentaParagrafos(texto, modal);
 			}
 		}
 		Controle.setModificado(true);
 		return texto;
 	}
         
-        public static void segmentarDiretorio(File diretorio, List<File> arquivos, int opcao)
-        {
-            int ind;
-            File arqLer;
-            String textoArq, nomeRet;
-            String[] nomeRetorno;
-            Map<File, String> arquivosTexto = new HashMap<File, String>();
-            TratamentoArquivo arquivo = new TratamentoArquivo();
-
-            for(ind=0; ind<arquivos.size(); ind++)
-            {
-                File retorno;
-
-                arqLer = arquivos.get(ind);
-
-                //Ler o arquivo e segmentar conforme a opção
-                textoArq = arquivo.leArquivo(arqLer);
-
-                //Segmentar automaticamente o texto conforme a opcao
-                textoArq = SegmentadorAutomatico.segmentar(textoArq, Integer.valueOf(opcao));
-
-                //Abrir um arquivo segmentado e salvar
-                nomeRet = arqLer.getName();
-                nomeRetorno = nomeRet.split("\\.");
-
-                retorno = new File(diretorio.getAbsolutePath() + File.separator + nomeRetorno[0] + "_tseg." + nomeRetorno[1]);
-                
-                arquivosTexto.put(retorno, textoArq);
-            }
-            
-            //Pede para a classe responsável pela gravação dos arquivos gravar o lote de arquivos
-            arquivo.gravaDiretorio(arquivosTexto);
-        }
-        
         public static String segmentar(String texto, int tipoSegmentacao) {
             
             SegmentadorAutomatico seg = new SegmentadorAutomatico();
             
 		if (tipoSegmentacao == PALAVRAS) {
-			texto = seg.segmentaPalavras(texto);
+			texto = seg.segmentaPalavras(texto, null);
 		} else {
 			if (tipoSegmentacao == SENTENCAS) {
-				texto = seg.segmentaSentencas(texto);
+				texto = seg.segmentaSentencas(texto, null);
 			} else {
-				texto = seg.segmentaParagrafos(texto);
+				texto = seg.segmentaParagrafos(texto, null);
 			}
 		}
 		return texto;
 	}
 
-	private String segmentaParagrafos(String texto) {
+	private String segmentaParagrafos(String texto, ModalProgressoSegmentacao modal) {
+            
 		StringBuilder textoSegmentacao = new StringBuilder(texto);
 		SegmentadorUtil sUtil = new SegmentadorUtil();
 		ControladorUnidades controladorUnidades = Controle
 				.getControladorUnidades();
+                
+                double valorProgresso;
+                int progressoAtual, progressoAnterior, ponto;
+                int tamanhoTextoInicio, oQueFalta;
+                
+                progressoAtual = 0;
+                progressoAnterior = 0;
+                tamanhoTextoInicio = textoSegmentacao.length() - controladorUnidades.getTagDocumentFim().length() - controladorUnidades.getTagDocumentInicio().length();
 
 		int inicioUnidade = controladorUnidades.getTagDocumentInicio().length() + 1;
 		int i = inicioUnidade;
 
 		while (i <= (textoSegmentacao.length() - controladorUnidades
 				.getTagDocumentFim().length())) {
+                    
 			if ('\n' == textoSegmentacao.charAt(i)) {
 				inicioUnidade = sUtil.adicionaUnidade(inicioUnidade, i, false,
 						textoSegmentacao);
@@ -108,16 +86,46 @@ public class SegmentadorAutomatico {
 				i = inicioUnidade++;
 			}
 			i++;
+                        
+                        if(modal!=null)
+                        {
+                            //Atualizar barra de progresso
+                            ponto = i - controladorUnidades.getTagDocumentInicio().length();
+                            oQueFalta = textoSegmentacao.length() - controladorUnidades.getTagDocumentFim().length() - ponto;
+                            valorProgresso = Double.valueOf(1) - (Double.valueOf(oQueFalta)/Double.valueOf(tamanhoTextoInicio));
+
+                            progressoAtual = (int)(valorProgresso*100);
+                            if(progressoAtual-progressoAnterior>=2)
+                            {
+                                modal.atualizarProgresso(progressoAtual);
+                                progressoAnterior = progressoAtual;
+                            }
+                        }
+                        
 		}
+                
+                if(modal!=null)
+                {
+                    modal.atualizarProgresso(100);
+                }
+                
 		return textoSegmentacao.toString();
 	}
 
-	private String segmentaSentencas(String texto) {
+	private String segmentaSentencas(String texto, ModalProgressoSegmentacao modal) {
 		StringBuilder textoSegmentacao = new StringBuilder(texto);
 		SegmentadorUtil sUtil = new SegmentadorUtil();
 		ControladorUnidades controladorUnidades = Controle
 				.getControladorUnidades();
 
+                double valorProgresso;
+                int progressoAtual, progressoAnterior, ponto;
+                int tamanhoTextoInicio, oQueFalta;
+                
+                progressoAtual = 0;
+                progressoAnterior = 0;
+                tamanhoTextoInicio = textoSegmentacao.length() - controladorUnidades.getTagDocumentFim().length() - controladorUnidades.getTagDocumentInicio().length();
+                
 		int inicioUnidade = controladorUnidades.getTagDocumentInicio().length() + 1;
 		int i = inicioUnidade;
 
@@ -152,7 +160,29 @@ public class SegmentadorAutomatico {
 				i = inicioUnidade++;
 			}
 			i++;
+                        
+                        if(modal!=null)
+                        {
+                            //Atualizar barra de progresso
+                            ponto = i - controladorUnidades.getTagDocumentInicio().length();
+                            oQueFalta = textoSegmentacao.length() - controladorUnidades.getTagDocumentFim().length() - ponto;
+                            valorProgresso = Double.valueOf(1) - (Double.valueOf(oQueFalta)/Double.valueOf(tamanhoTextoInicio));
+
+                            progressoAtual = (int)(valorProgresso*100);
+                            if(progressoAtual-progressoAnterior>=2)
+                            {
+                                modal.atualizarProgresso(progressoAtual);
+                                progressoAnterior = progressoAtual;
+                            }
+                        }
+                        
 		}
+                
+                if(modal!=null)
+                {
+                    modal.atualizarProgresso(100);
+                }
+                
 		return textoSegmentacao.toString();
 	}
 
@@ -167,17 +197,25 @@ public class SegmentadorAutomatico {
 		return false;
 	}
 
-	private String segmentaPalavras(String texto) {
+	private String segmentaPalavras(String texto, ModalProgressoSegmentacao modal) {
+              
 		StringBuilder textoSegmentacao = new StringBuilder(texto);
 		SegmentadorUtil sUtil = new SegmentadorUtil();
 		ControladorUnidades controladorUnidades = Controle
 				.getControladorUnidades();
+                
+                double valorProgresso;
+                int progressoAtual, progressoAnterior, ponto;
+                int tamanhoTextoInicio, oQueFalta;
+                
+                progressoAtual = 0;
+                progressoAnterior = 0;
+                tamanhoTextoInicio = textoSegmentacao.length() - controladorUnidades.getTagDocumentFim().length() - controladorUnidades.getTagDocumentInicio().length();
 
 		int inicioUnidade = controladorUnidades.getTagDocumentInicio().length() + 1;
 		int i = inicioUnidade;
 
-		while (i < (textoSegmentacao.length() - controladorUnidades
-				.getTagDocumentFim().length())) {
+		while (i < (textoSegmentacao.length() - controladorUnidades.getTagDocumentFim().length())) {
 			if (' ' == textoSegmentacao.charAt(i)
 					|| '\n' == textoSegmentacao.charAt(i)
 					|| i + 1 == textoSegmentacao.length()) {
@@ -193,13 +231,36 @@ public class SegmentadorAutomatico {
 						i = inicioUnidade;
 					}
 				}
+                                
 			}
 			while (inicioUnidade < textoSegmentacao.length()
 					&& '\n' == textoSegmentacao.charAt(inicioUnidade)) {
 				i = inicioUnidade++;
 			}
 			i++;
+
+                        if(modal!=null)
+                        {
+                            //Atualizar barra de progresso
+                            ponto = i - controladorUnidades.getTagDocumentInicio().length();
+                            oQueFalta = textoSegmentacao.length() - controladorUnidades.getTagDocumentFim().length() - ponto;
+                            valorProgresso = Double.valueOf(1) - (Double.valueOf(oQueFalta)/Double.valueOf(tamanhoTextoInicio));
+
+                            progressoAtual = (int)(valorProgresso*100);
+                            if(progressoAtual-progressoAnterior>=2)
+                            {
+                                modal.atualizarProgresso(progressoAtual);
+                                progressoAnterior = progressoAtual;
+                            }
+                        }
+                        
 		}
+                
+                if(modal!=null)
+                {
+                    modal.atualizarProgresso(100);
+                }
+                
 		return textoSegmentacao.toString();
 	}
 }

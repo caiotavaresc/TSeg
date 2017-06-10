@@ -1,7 +1,9 @@
 package tseg.arquivo;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
@@ -21,26 +23,29 @@ public class TratamentoArquivo {
 	
 	public String leArquivo(File CaminhoArquivo) {
 		StringBuilder conteudo = new StringBuilder();
-		Scanner scanner;
 		try {
-			scanner = new Scanner(CaminhoArquivo);
+                        FileReader arq = new FileReader(CaminhoArquivo);
+                        
+                        BufferedReader lerArq = new BufferedReader(arq);
+                        
+                        String linha = lerArq.readLine(); 
+                        
+                        while (linha != null) {
+                            conteudo.append(linha);
+                            linha = lerArq.readLine(); // lê da segunda até a última linha
+                            
+                            if(linha != null)
+                                conteudo.append("\n");
+                            
+                        }
 
-			while (scanner.hasNext()) {
-				String nextLine = scanner.nextLine();
-				if (scanner.hasNext()) {
-					conteudo.append(nextLine + "\n");
-				} else {
-					conteudo.append(nextLine);
-				}
-			}
-			scanner.close();
+                        arq.close();
 					
 			conteudo = insereTagDocument(conteudo);
 
 			Controle.getControladorUnidades().recuperaUnidades(
 					conteudo.toString());
 
-			// Controle.getJanelaPrincial().setTitulo(CaminhoArquivo.getPath());
 		} catch (FileNotFoundException e) {			
 			String message,title;
 			if (tseg.janelas.JanelaPrincipal.portugues)
@@ -55,7 +60,22 @@ public class TratamentoArquivo {
 			}
 			JOptionPane.showMessageDialog(null, message, title,
 					JOptionPane.ERROR_MESSAGE);
-		}
+		} catch (IOException e)
+                {
+                        String message, title;
+                        if(tseg.janelas.JanelaPrincipal.portugues)
+                        {
+                                message = "Não foi possível abrir o arquivo";
+                                title = "Erro";
+                        }
+                        else
+                        {
+                                message = "Could not open file";
+                                title = "Error";
+                        }
+                        JOptionPane.showMessageDialog(null, message, title,
+					JOptionPane.ERROR_MESSAGE);
+                }
 		return conteudo.toString();
 	}
 
@@ -77,7 +97,7 @@ public class TratamentoArquivo {
                         this.gravarArquivo(CaminhoArquivo, texto);
                     
 			Controle.setModificado(false);
-			// Controle.getJanelaPrincial().setTitulo(file.getAbsolutePath());
+			Controle.getJanelaPrincipal().alterarTituloJanela("T-Seg - " + CaminhoArquivo.getAbsolutePath());
 			Configuracoes configuracoes = new Configuracoes();
 			configuracoes.guardaUltimoArquivo(CaminhoArquivo);
 

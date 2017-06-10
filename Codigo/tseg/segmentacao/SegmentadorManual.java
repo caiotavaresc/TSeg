@@ -55,21 +55,34 @@ public class SegmentadorManual {
 
 	public String removeTodasUnidades(String texto) {
             
-                //Memorizar o contexto para a ação de desfazer
-                GerenciadorAcoes.guardarContexto();
-            
-		ArrayList<Unidade> list = Controle.getControladorUnidades()
-				.getUnidadesInicio();
+            //Memorizar o contexto para a ação de desfazer
+            GerenciadorAcoes.guardarContexto();
 
-		while (!(list.isEmpty())) {
-			texto = removeUnidade(texto, list.get(0).getIdentificador(), true);
-		}
+            ArrayList<Unidade> list = Controle.getControladorUnidades()
+                            .getUnidadesInicio();
 
-		return texto;
+            while (!(list.isEmpty())) {
+                texto = removeUnidade(texto, list.get(0).getIdentificador(), true);
+            }
+
+            return texto;
 	}
+        
+        public static String removeListaUnidades(String texto, ArrayList<Unidade> list)
+        {
+            //Memorizar o contexto para a ação de desfazer
+            GerenciadorAcoes.guardarContexto();
+            
+            while (!(list.isEmpty())) {
+                texto = removeUnidade(texto, list.get(0).getIdentificador(), true);
+                list.remove(0);
+            }
 
-	public String removeUnidade(String texto, String identificador, boolean lote) {
-		ArrayList<Unidade> unidade = Controle.getControladorUnidades()				.getUnidade(identificador);
+            return texto;
+        }
+
+	public static String removeUnidade(String texto, String identificador, boolean lote) {
+		ArrayList<Unidade> unidade = Controle.getControladorUnidades().getUnidade(identificador);
 
 		Unidade unidadeFim = unidade.get(1);
 

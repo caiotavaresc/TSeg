@@ -71,7 +71,7 @@ public class ControladorUnidades{
 
 			return identificador.toString();
 		} else {
-			return "<UNIT " + identificadorSobreposicao + "id=\""
+			return "<unit " + identificadorSobreposicao + "id=\""
 					+ geraIdUnidade() + "\">";
 		}
 	}
@@ -361,8 +361,8 @@ public class ControladorUnidades{
 
 		int lengthAnterior = identificador.length();
 
-		int iniID = identificador.indexOf("'");
-		int fimID = identificador.lastIndexOf("'");
+		int iniID = identificador.indexOf("\"");
+		int fimID = identificador.lastIndexOf("\"");
 		identificador = identificador.substring(0, iniID + 1) + id
 				+ identificador.substring(fimID);
 
@@ -393,8 +393,8 @@ public class ControladorUnidades{
 
 		lengthAnterior = identificador.length();
 
-		iniID = identificador.indexOf("'");
-		fimID = identificador.lastIndexOf("'");
+		iniID = identificador.indexOf("\"");
+		fimID = identificador.lastIndexOf("\"");
 		identificador = identificador.substring(0, iniID + 1) + id
 				+ identificador.substring(fimID);
 

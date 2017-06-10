@@ -9,7 +9,7 @@ public class FiltroExtencoes {
 	private List<String> extencoes = Arrays.asList("txt");
 	private List<String> descricao = Arrays.asList("Documentos de Texto");
 
-	public String retornaExtencao(File CaminhoDoArquivo) {
+	public static String retornaExtencao(File CaminhoDoArquivo) {
 		String nomeDoArquivo = CaminhoDoArquivo.getName();
 		int comecoDaExtencao = nomeDoArquivo.lastIndexOf('.');
 		String extencao = null;

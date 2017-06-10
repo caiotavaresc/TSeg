@@ -29,124 +29,6 @@ public class AcaoAbaSegmentacao {
     
         private AcaoJanelaPrincipal acao = new AcaoJanelaPrincipal();
     
-	public ActionListener btnSegmentacaoAutomaticaActionListener() {
-		return new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				JMenuItem menuItemPalavras = montaMenuItemPalavras();
-				JMenuItem menuItemSentencas = montaMenuItemSentencas();
-				JMenuItem menuItemParagrafos = montaMenuItemParagrafos();
-
-				JPopupMenu popupSegmentacaoAutomatica = new JPopupMenu();
-				popupSegmentacaoAutomatica.add(menuItemPalavras);
-				popupSegmentacaoAutomatica.add(menuItemSentencas);
-				popupSegmentacaoAutomatica.add(menuItemParagrafos);
-
-				int popupW = ((JButton) evt.getSource()).getWidth() / 2;
-				int popupH = ((JButton) evt.getSource()).getHeight() / 2;
-
-				popupSegmentacaoAutomatica.show((Component) evt.getSource(),
-						popupW, popupH);
-			}
-
-			private JMenuItem montaMenuItemPalavras() {
-				JMenuItem menuItemPalavras = new JMenuItem();
-				if (tseg.janelas.JanelaPrincipal.portugues)
-				{
-					menuItemPalavras.setText("Palavras");
-					menuItemPalavras.setMnemonic('a');
-				}
-				else
-				{
-					menuItemPalavras.setText("Words");
-					menuItemPalavras.setMnemonic('W');
-				}
-				menuItemPalavras.addActionListener(new ActionListener() {
-
-					@Override
-					public void actionPerformed(ActionEvent evt) {
-						SegmentadorAutomatico segmentador = new SegmentadorAutomatico();
-						String texto = Controle.getJanelaPrincipal()
-								.getAbaSegmentaca().getTextoTxaSegmentacao();
-
-						texto = segmentador.segmenta(texto,
-								SegmentadorAutomatico.PALAVRAS);
-
-						Controle.getJanelaPrincipal().getAbaSegmentaca()
-								.setTextoTxaSegmentacao(texto);
-					}
-				});
-
-				return menuItemPalavras;
-			}
-
-			private JMenuItem montaMenuItemSentencas() {
-				JMenuItem menuItemSentencas = new JMenuItem();
-				if (tseg.janelas.JanelaPrincipal.portugues)
-				{
-					menuItemSentencas.setText("Sentenças");
-				}
-				else
-				{
-					menuItemSentencas.setText("Sentences");
-				}
-				menuItemSentencas.setMnemonic('s');
-				menuItemSentencas.addActionListener(new ActionListener() {
-
-					@Override
-					public void actionPerformed(ActionEvent arg0) {
-						SegmentadorAutomatico segmentador = new SegmentadorAutomatico();
-
-						String texto = Controle.getJanelaPrincipal()
-								.getAbaSegmentaca().getTextoTxaSegmentacao();
-
-						texto = segmentador.segmenta(texto,
-								SegmentadorAutomatico.SENTENCAS);
-
-						Controle.getJanelaPrincipal().getAbaSegmentaca()
-								.setTextoTxaSegmentacao(texto);
-
-					}
-				});
-
-				return menuItemSentencas;
-			}
-
-			private JMenuItem montaMenuItemParagrafos() {
-				JMenuItem menuItemParagrafos = new JMenuItem();
-				if (tseg.janelas.JanelaPrincipal.portugues)
-				{
-					menuItemParagrafos.setText("Parágrafos");
-				}
-				else
-				{
-					menuItemParagrafos.setText("Paragraphs");
-				}
-				menuItemParagrafos.setMnemonic('p');
-				menuItemParagrafos.addActionListener(new ActionListener() {
-
-					@Override
-					public void actionPerformed(ActionEvent evt) {
-						SegmentadorAutomatico segmentador = new SegmentadorAutomatico();
-
-						String texto = Controle.getJanelaPrincipal()
-								.getAbaSegmentaca().getTextoTxaSegmentacao();
-
-						texto = segmentador.segmenta(texto,
-								SegmentadorAutomatico.PARAGRAGOS);
-
-						Controle.getJanelaPrincipal().getAbaSegmentaca()
-								.setTextoTxaSegmentacao(texto);
-
-					}
-				});
-
-				return menuItemParagrafos;
-			}
-		};
-	}
-
 	public MouseAdapter txpSegmentacaoMouseAdapter() {
 		return new MouseAdapter() {
 			private int countErro = 0;
@@ -271,8 +153,8 @@ public class AcaoAbaSegmentacao {
 										.getIdentificador();
 								int numeroID = Integer.parseInt(identificador
 										.substring(
-												identificador.indexOf("'") + 1,
-												identificador.lastIndexOf("'")));
+												identificador.indexOf("\"") + 1,
+												identificador.lastIndexOf("\"")));
 
 								if (id <= numeroID) {
 									Controle.setModificado(true);
@@ -303,7 +185,7 @@ public class AcaoAbaSegmentacao {
 								}
 								else
 								{
-									msg = "ID invalid";
+									msg = "Invalid ID";
 									titulo = "Error";
 								}
 								JOptionPane.showMessageDialog(null,
@@ -339,11 +221,14 @@ public class AcaoAbaSegmentacao {
 
 						String texto = Controle.getJanelaPrincipal()
 								.getAbaSegmentaca().getTextoTxaSegmentacao();
+                                                int inicioSelecao = Controle.getJanelaPrincipal().getAbaSegmentaca().getTxpSegmentacao().getSelectionStart();
 
 						texto = segmentador.segmenta(txpSegmentacao, false);
 
 						Controle.getJanelaPrincipal().getAbaSegmentaca()
 								.setTextoTxaSegmentacao(texto);
+                                                
+                                                Controle.getJanelaPrincipal().getAbaSegmentaca().getTxpSegmentacao().setCaretPosition(inicioSelecao);
 
 					}
 				});
@@ -367,6 +252,7 @@ public class AcaoAbaSegmentacao {
 					@Override
 					public void actionPerformed(ActionEvent evt) {
 						SegmentadorManual segmentador = new SegmentadorManual();
+                                                int inicioSelecao = Controle.getJanelaPrincipal().getAbaSegmentaca().getTxpSegmentacao().getSelectionStart();
 
 						String texto = Controle.getJanelaPrincipal()
 								.getAbaSegmentaca().getTextoTxaSegmentacao();
@@ -375,6 +261,8 @@ public class AcaoAbaSegmentacao {
 
 						Controle.getJanelaPrincipal().getAbaSegmentaca()
 								.setTextoTxaSegmentacao(texto);
+                                                
+                                                Controle.getJanelaPrincipal().getAbaSegmentaca().getTxpSegmentacao().setCaretPosition(inicioSelecao);
 					}
 				});
 				return itemUnidadeIndependente;
@@ -458,6 +346,8 @@ public class AcaoAbaSegmentacao {
 								JOptionPane.WARNING_MESSAGE);
 
 						if (confirmDialog == JOptionPane.YES_OPTION) {
+                                                        int inicioSelecao = Controle.getJanelaPrincipal().getAbaSegmentaca().getTxpSegmentacao().getSelectionStart();
+                                                       
 							SegmentadorManual segmentador = new SegmentadorManual();
 							String texto = Controle.getJanelaPrincipal()
 									.getAbaSegmentaca()
@@ -468,6 +358,8 @@ public class AcaoAbaSegmentacao {
 
 							Controle.getJanelaPrincipal().getAbaSegmentaca()
 									.setTextoTxaSegmentacao(texto);
+                                                        
+                                                        Controle.getJanelaPrincipal().getAbaSegmentaca().getTxpSegmentacao().setCaretPosition(inicioSelecao);
 						}
 					}
 				});

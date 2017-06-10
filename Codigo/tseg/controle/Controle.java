@@ -36,4 +36,9 @@ public class Controle {
         {
             Controle.controladorUnidades = controlador;
         }
+        
+        public static void setCursorInicioTexto()
+        {
+            Controle.getJanelaPrincipal().getAbaSegmentaca().getTxpSegmentacao().setCaretPosition(0);
+        }
 }

@@ -50,4 +50,18 @@ public class Unidade implements Comparable<Unidade> {
 
 		return unidade;
 	}
+        
+        public int getId()
+        {
+            int idParametro = Integer.parseInt(this.getIdentificador().substring(
+                    this.getIdentificador().indexOf("\"") + 1,
+                    this.getIdentificador().lastIndexOf("\"")));
+            
+            return idParametro;
+        }
+        
+        public String toString()
+        {
+            return this.getIdentificador();
+        }
 }

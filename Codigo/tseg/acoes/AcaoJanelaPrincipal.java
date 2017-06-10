@@ -14,13 +14,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
+import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -40,6 +38,10 @@ import tseg.arquivo.TratamentoArquivo;
 import tseg.segmentacao.SegmentadorAutomatico;
 import tseg.configuracoes.Configuracoes;
 import tseg.controle.Controle;
+import tseg.janelas.ModalProgressoSegmentacao;
+import tseg.janelas.ModalRemoverUmaUnidade;
+import tseg.janelas.ModalSegmentarDiretorio;
+import tseg.janelas.ModalSobre;
 import tseg.segmentacao.GerenciadorAcoes;
 import tseg.segmentacao.SegmentadorManual;
 import tseg.segmentacao.SegmentadorUtil;
@@ -67,7 +69,9 @@ public class AcaoJanelaPrincipal {
 					{
 						abrir = "Open File";
 					}
-					int retornoFc = fc.showDialog(null, abrir);
+                                        fc.setAcceptAllFileFilterUsed(false);
+                                        
+					int retornoFc = fc.showDialog(Controle.getJanelaPrincipal().getFrame(), abrir);
 
 					if (retornoFc == JFileChooser.APPROVE_OPTION) {
 						String textoArquivo;
@@ -133,68 +137,24 @@ public class AcaoJanelaPrincipal {
 					Controle.getJanelaPrincipal().getAbaEstatisticas()
 							.atualizaEstatisticas();
 				}
+                                if (tabbedPane.getSelectedIndex() == 2) {
+                                        Controle.getJanelaPrincipal().getAbaSegmentacaoCores().gerarSegmentacaoCores();
+                                }
 			}
 		};
 	}
         
-        public ActionListener segmentarDiretorio(){
-            return new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				int confirmaFechamento = confirmaFechamento();
-
-				if (confirmaFechamento != JOptionPane.CANCEL_OPTION) {
-					JFileChooser fc = getFileChooserCustomizado();
-                                        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-					TratamentoArquivo arquivo = new TratamentoArquivo();
-					Configuracoes configuracoes = new Configuracoes();
-					
-					String abrir;
-					if (tseg.janelas.JanelaPrincipal.portugues)
-					{
-						abrir = "Selecionar diretório";
-					}	
-					else
-					{
-						abrir = "Select directory";
-					}
-					int retornoFc = fc.showDialog(null, abrir);
-
-					if (retornoFc == JFileChooser.APPROVE_OPTION) {
-						File diretorio;
-                                                File[] arquivos;
-                                                List<File> arquivosFiltrado;
-                                                String opcao, mensagem;
-
-                                                diretorio = fc.getSelectedFile();
-
-                                                //Listar todos os arquivos do diretório
-                                                arquivos = diretorio.listFiles();
-                                                
-                                                //Filtrar os arquivos de acordo com o formato
-                                                arquivosFiltrado = filtrarArquivos(arquivos);
-                                                
-                                                if (arquivosFiltrado.isEmpty())
-                                                {
-                                                    //Dar mensagem de erro
-                                                    if(tseg.janelas.JanelaPrincipal.portugues)
-                                                        mensagem = "Não existem arquivos de texto aptos para segmentação no diretório escolhido.";
-                                                    else
-                                                        mensagem = "There are not text files suitable to segmentation at chosen directory";
-                                                    
-                                                    JOptionPane.showMessageDialog(null, mensagem,
-									"Erro", JOptionPane.ERROR_MESSAGE);
-                                                }
-                                                else
-                                                {
-                                                    opcao = JOptionPane.showInputDialog("Selecione uma opção de segmentação:\n\n1) Palavras\n2) Sentenças\n3) Parágrafos");
-                                                    SegmentadorAutomatico.segmentarDiretorio(diretorio, arquivosFiltrado, Integer.valueOf(opcao));
-                                                }
-
-					}
-				}
-			};
-		};
+        public ActionListener segmentarDiretorio2()
+        {
+            return new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent evt) {
+                    boolean portugues = Controle.getJanelaPrincipal().isPortugues();
+                    
+                    ModalSegmentarDiretorio popup = new ModalSegmentarDiretorio(portugues);
+                }
+            };
         }
         
         public ActionListener itemSegmentacaoAutomaticaPalavras() {
@@ -202,15 +162,26 @@ public class AcaoJanelaPrincipal {
 
 			@Override
                         public void actionPerformed(ActionEvent evt) {
+                            
+                                GerenciadorAcoes.voltarAbaPrincipal();
+                            
                                 SegmentadorAutomatico segmentador = new SegmentadorAutomatico();
                                 String texto = Controle.getJanelaPrincipal()
                                                 .getAbaSegmentaca().getTextoTxaSegmentacao();
 
+                                //Exeibir a janela de progresso
+                                ModalProgressoSegmentacao modal = new ModalProgressoSegmentacao();
+                                
                                 texto = segmentador.segmenta(texto,
-                                                SegmentadorAutomatico.PALAVRAS);
+                                                SegmentadorAutomatico.PALAVRAS, modal);
 
                                 Controle.getJanelaPrincipal().getAbaSegmentaca()
                                                 .setTextoTxaSegmentacao(texto);
+                                
+                                modal.ocultar();
+                                modal = null;
+                                
+                                Controle.setCursorInicioTexto();
                         }
 		};
 	}
@@ -220,15 +191,25 @@ public class AcaoJanelaPrincipal {
 
 			@Override
                         public void actionPerformed(ActionEvent evt) {
+                                GerenciadorAcoes.voltarAbaPrincipal();
+                            
                                 SegmentadorAutomatico segmentador = new SegmentadorAutomatico();
                                 String texto = Controle.getJanelaPrincipal()
                                                 .getAbaSegmentaca().getTextoTxaSegmentacao();
 
+                                //Exibir a janela de progresso
+                                ModalProgressoSegmentacao modal = new ModalProgressoSegmentacao();
+                                
                                 texto = segmentador.segmenta(texto,
-                                                SegmentadorAutomatico.SENTENCAS);
+                                                SegmentadorAutomatico.SENTENCAS, modal);
 
                                 Controle.getJanelaPrincipal().getAbaSegmentaca()
                                                 .setTextoTxaSegmentacao(texto);
+                                
+                                modal.setVisible(false);
+                                modal = null;
+                                
+                                Controle.setCursorInicioTexto();
                         }
 		};
 	}
@@ -238,15 +219,25 @@ public class AcaoJanelaPrincipal {
 
 			@Override
                         public void actionPerformed(ActionEvent evt) {
+                                GerenciadorAcoes.voltarAbaPrincipal();
+                            
                                 SegmentadorAutomatico segmentador = new SegmentadorAutomatico();
                                 String texto = Controle.getJanelaPrincipal()
                                                 .getAbaSegmentaca().getTextoTxaSegmentacao();
 
+                                //Exibir a janela de progresso
+                                ModalProgressoSegmentacao modal = new ModalProgressoSegmentacao();
+                                
                                 texto = segmentador.segmenta(texto,
-                                                SegmentadorAutomatico.PARAGRAGOS);
+                                                SegmentadorAutomatico.PARAGRAGOS, modal);
 
                                 Controle.getJanelaPrincipal().getAbaSegmentaca()
                                                 .setTextoTxaSegmentacao(texto);
+                                
+                                modal.ocultar();
+                                modal = null;
+                                
+                                Controle.setCursorInicioTexto();
                         }
 		};
 	}
@@ -257,6 +248,8 @@ public class AcaoJanelaPrincipal {
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
+                        
+                            GerenciadorAcoes.voltarAbaPrincipal();
                         
                             //Verificar se o lugar onde estou tentando definir uma unidade, é um fragmento de unidade
                             int selecaoInicio = txpSegmentacao.getSelectionStart();
@@ -289,10 +282,27 @@ public class AcaoJanelaPrincipal {
 
                             Controle.getJanelaPrincipal().getAbaSegmentaca()
                                             .setTextoTxaSegmentacao(texto);
+                            
+                            Controle.getJanelaPrincipal().getAbaSegmentaca().getTxpSegmentacao().setCaretPosition(selecaoInicio);
 
                     }
             };
             
+        }
+        
+        public ActionListener itemRemoverUmaUnidade()
+        {
+            return new ActionListener()
+            {
+                @Override
+                public void actionPerformed(ActionEvent evt) {
+                    GerenciadorAcoes.voltarAbaPrincipal();
+                    
+                    boolean portugues = Controle.getJanelaPrincipal().isPortugues();
+                    
+                    ModalRemoverUmaUnidade popup = new ModalRemoverUmaUnidade(portugues);
+                }
+            };
         }
         
         public ActionListener itemRemoverTodasUnidades()
@@ -301,6 +311,9 @@ public class AcaoJanelaPrincipal {
 
                     @Override
                     public void actionPerformed(ActionEvent arg0) {
+                        
+                            GerenciadorAcoes.voltarAbaPrincipal();
+                        
                             String msg, title;
                             if (tseg.janelas.JanelaPrincipal.portugues)
                             {
@@ -330,6 +343,8 @@ public class AcaoJanelaPrincipal {
                                     Controle.getJanelaPrincipal()
                                                     .getAbaSegmentaca()
                                                     .setTextoTxaSegmentacao(texto);
+                                    
+                                    Controle.setCursorInicioTexto();
                             }
                     }
             };
@@ -373,33 +388,7 @@ public class AcaoJanelaPrincipal {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String sobre, title;
-				if (tseg.janelas.JanelaPrincipal.portugues)
-				{
-					sobre = " T-Seg é uma ferramenta para marcação e segmentação de textos"
-						+ " \n usada para definição de unidades mínimas de anotação de corpora."
-						+ " \n Nele, o usuário define como quer que seja feita automaticamente a segmentação"
-						+ " \n (por meio de regras), podendo inclusive marcar manualmente os segmentos em um"
-						+ " \n texto-fonte. Caso a marcaçao seja feita manualmente, vários usuários podem"
-						+ " \n executar a mesma tarefa, cabendo então ao sistema determinar o"
-						+ " \n nível de confiança do esquema de marcação utilizado, com base em uma análise"
-						+ " \n do grau de concordância entre os marcadores humanos.";
-					title = "Sobre o T-Seg";	
-				}
-				else
-				{
-					sobre = "T-Seg is a tool for labeling and segmentation of texts "
-						+ "\n used for defining minimum units of annotation corpora."
-						+ "\n In it, you define how you want to be automatically segmenting"
-						+ "\n (by rules), and may also manually mark the segments in one"
-						+ "\n source text. If the marking is done manually, multiple users can"
-						+ "\n perform the same task, then fitting the system to determine the"
-						+ "\n confidence level marking scheme used, based on an analysis"
-						+ "\n the degree of agreement between human markers.";
-					title = "About T-Seg";
-				}
-				JOptionPane.showMessageDialog(null, sobre, title,
-						JOptionPane.PLAIN_MESSAGE);
+                            new ModalSobre(Controle.getJanelaPrincipal().isPortugues());
 			}
 		};
 	}
@@ -417,6 +406,19 @@ public class AcaoJanelaPrincipal {
                                 {
                                     try
                                     {
+                                        String texto, titulo;
+                                        
+                                        if (Controle.getJanelaPrincipal().isPortugues())
+                                        {
+                                            texto = "Não foi possível localizar o manual neste computador. Faça download clicando <a href='http://www.each.usp.br/norton/resdial/tools/TSeg_v1.0.zip'>aqui</a>";
+                                            titulo = "Erro";
+                                        }
+                                        else
+                                        {   
+                                            texto = "The manual could not be found on this computer. Make download clicking <a href='http://www.each.usp.br/norton/resdial/tools/TSeg_v1.0.zip'>here</a>";
+                                            titulo = "Error";
+                                        }
+                                            
                                         // for copying style
                                         JLabel label = new JLabel();
                                         Font font = label.getFont();
@@ -426,7 +428,7 @@ public class AcaoJanelaPrincipal {
                                         style.append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";");
                                         style.append("font-size:" + font.getSize() + "pt;");
                                         
-                                        String mensagem = "<html><body style=\"" + style + "\">Não foi possível localizar o manual neste computador. Faça downoad clicando <a href='http://www.each.usp.br/norton/resdial/tools/TSeg_v1.0.zip'>aqui</a>.</body></html>";                                     
+                                        String mensagem = "<html><body style=\"" + style + "\">" + texto + ".</body></html>";                                     
                                         JEditorPane je = new JEditorPane();
                                         je.setEditorKit(JEditorPane.createEditorKitForContentType("text/html"));
                                         je.setText(mensagem);
@@ -449,7 +451,7 @@ public class AcaoJanelaPrincipal {
                                             }
                                         });
                                         
-                                        JOptionPane.showMessageDialog(null, je);
+                                        JOptionPane.showMessageDialog(null, je, titulo, JOptionPane.ERROR_MESSAGE);
                                     }
                                     catch(Exception ex2)
                                     {
@@ -470,11 +472,11 @@ public class AcaoJanelaPrincipal {
 
 			@Override
 			public void actionPerformed(ActionEvent evt) {
-				final JFrame janelaCor = new JFrame();
+				final JDialog janelaCor = new JDialog();
 				if (tseg.janelas.JanelaPrincipal.portugues)
-					janelaCor.setTitle("Cores - Tags");
+					janelaCor.setTitle("XML - Tags");
 				else
-					janelaCor.setTitle("Colors - Tags");
+					janelaCor.setTitle("XML - Tags");
 				janelaCor.setResizable(false);
 				janelaCor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -488,23 +490,162 @@ public class AcaoJanelaPrincipal {
 			}
 		};
 	}
+        
+	public ActionListener itemCorUnidades() {
+		return new ActionListener() {
 
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				final JDialog janelaCor = new JDialog();
+				if (tseg.janelas.JanelaPrincipal.portugues)
+					janelaCor.setTitle("Esquema de Cores - Unidades");
+				else
+					janelaCor.setTitle("Color scheme - Units");
+				janelaCor.setResizable(false);
+				janelaCor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+				JPanel painel = montaPainelCores(janelaCor, 4);
+
+				janelaCor.add(painel);
+				janelaCor.pack();
+				janelaCor.setLocationRelativeTo(null);
+				janelaCor.setVisible(true);
+
+			}
+		};
+	}
+
+	public ActionListener itemCorUnidades2() {
+		return new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				final JDialog janelaCor = new JDialog();
+				if (tseg.janelas.JanelaPrincipal.portugues)
+					janelaCor.setTitle("Esquema de Cores - Unidades (intercaladas)");
+				else
+					janelaCor.setTitle("Color scheme - Interleaved units");
+				janelaCor.setResizable(false);
+				janelaCor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+				JPanel painel = montaPainelCores(janelaCor, 5);
+
+				janelaCor.add(painel);
+				janelaCor.pack();
+				janelaCor.setLocationRelativeTo(null);
+				janelaCor.setVisible(true);
+
+			}
+		};
+	}        
+        
+	public ActionListener itemCorUnidadesEmbutidas() {
+		return new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				final JDialog janelaCor = new JDialog();
+				if (tseg.janelas.JanelaPrincipal.portugues)
+					janelaCor.setTitle("Esquema de Cores - Unidades embutidas");
+				else
+					janelaCor.setTitle("Color scheme - Built-in units");
+				janelaCor.setResizable(false);
+				janelaCor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+				JPanel painel = montaPainelCores(janelaCor, 6);
+
+				janelaCor.add(painel);
+				janelaCor.pack();
+				janelaCor.setLocationRelativeTo(null);
+				janelaCor.setVisible(true);
+
+			}
+		};
+	}
+        
+	public ActionListener itemCorUnidadesSobrepostas() {
+		return new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				final JDialog janelaCor = new JDialog();
+				if (tseg.janelas.JanelaPrincipal.portugues)
+					janelaCor.setTitle("Esquema de Cores - Segmentos sobrepostos");
+				else
+					janelaCor.setTitle("Color scheme - Overlapping segments");
+				janelaCor.setResizable(false);
+				janelaCor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+				JPanel painel = montaPainelCores(janelaCor, 7);
+
+				janelaCor.add(painel);
+				janelaCor.pack();
+				janelaCor.setLocationRelativeTo(null);
+				janelaCor.setVisible(true);
+
+			}
+		};
+	}
+        
+	public ActionListener itemCorUnidadesIndependentes() {
+		return new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent evt) {
+				final JDialog janelaCor = new JDialog();
+				if (tseg.janelas.JanelaPrincipal.portugues)
+					janelaCor.setTitle("Esquema de Cores - Unidades independentes");
+				else
+					janelaCor.setTitle("Color scheme - Independent units");
+				janelaCor.setResizable(false);
+				janelaCor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+				JPanel painel = montaPainelCores(janelaCor, 8);
+
+				janelaCor.add(painel);
+				janelaCor.pack();
+				janelaCor.setLocationRelativeTo(null);
+				janelaCor.setVisible(true);
+
+			}
+		};
+	}        
+        
 	/*
 	 * Tipo 1 = Tag Tipo 2 = Texto Segmentado Tipo 3 = Unidade Independente
 	 */
-	private JPanel montaPainelCores(final JFrame janelaCor, final int tipo) {
+	private JPanel montaPainelCores(final JDialog janelaCor, final int tipo) {
 		final Configuracoes configuracoes = new Configuracoes();
 		final JColorChooser colorChooser = new JColorChooser();
+                janelaCor.setModal(true);
 
-		if (tipo == 1) {
-			colorChooser.setColor(configuracoes.getCorTag());
-		} else {
-			if (tipo == 2) {
-				colorChooser.setColor(configuracoes.getCorTexto());
-			} else {
-				colorChooser.setColor(configuracoes.getCorIndependente());
-			}
-		}
+                switch(tipo)
+                {
+                    case 1:
+                        colorChooser.setColor(configuracoes.getCorTag());
+                        break;
+                    case 2:
+                        colorChooser.setColor(configuracoes.getCorTexto());
+                        break;
+                    case 3:
+                        colorChooser.setColor(configuracoes.getCorIndependente());
+                        break;
+                    case 4:
+                        colorChooser.setColor(configuracoes.getCorUnidade1());
+                        break;
+                    case 5:
+                        colorChooser.setColor(configuracoes.getCorUnidade2());
+                        break;
+                    case 6:
+                        colorChooser.setColor(configuracoes.getCorEmbutida());
+                        break;
+                    case 7:
+                        colorChooser.setColor(configuracoes.getCorSobreposta());
+                        break;
+                    case 8:
+                        colorChooser.setColor(configuracoes.getCorIndep());
+                        break;
+                }
 
 		JPanel painel = new JPanel();
 		painel.setLayout(new BoxLayout(painel, BoxLayout.Y_AXIS));
@@ -523,16 +664,34 @@ public class AcaoJanelaPrincipal {
 
 			@Override
 			public void actionPerformed(ActionEvent evt) {
-				if (tipo == 1) {
-					colorChooser.setColor(configuracoes.COR_TAG_PADRAO);
-				} else {
-					if (tipo == 2) {
-						colorChooser.setColor(configuracoes.COR_TEXTO_PADRAO);
-					} else {
-						colorChooser
-								.setColor(configuracoes.COR_INDEPENDENTE_PADRAO);
-					}
-				}
+                            
+                                switch(tipo)
+                                {
+                                    case 1:
+                                        colorChooser.setColor(configuracoes.COR_TAG_PADRAO);
+                                        break;
+                                    case 2:
+                                        colorChooser.setColor(configuracoes.COR_TEXTO_PADRAO);
+                                        break;
+                                    case 3:
+                                        colorChooser.setColor(configuracoes.COR_INDEPENDENTE_PADRAO);
+                                        break;
+                                    case 4:
+                                        colorChooser.setColor(configuracoes.COR_FUNDO_UNIDADE_PADRAO);
+                                        break;
+                                    case 5:
+                                        colorChooser.setColor(configuracoes.COR_FUNDO_UNIDADE_2_PADRAO);
+                                        break;
+                                    case 6:
+                                        colorChooser.setColor(configuracoes.COR_FUNDO_EMBUTIDA_PADRAO);
+                                        break;
+                                    case 7:
+                                        colorChooser.setColor(configuracoes.COR_FUNDO_SOBREPOSTA_PADRAO);
+                                        break;
+                                    case 8:
+                                        colorChooser.setColor(configuracoes.COR_FUNDO_INDEPENDENTE_PADRAO);
+                                        break;
+                                }
 			}
 		});
 
@@ -542,23 +701,39 @@ public class AcaoJanelaPrincipal {
 
 			@Override
 			public void actionPerformed(ActionEvent evt) {
-				if (tipo == 1) {
-					configuracoes.guardaCores(colorChooser.getColor(),
-							configuracoes.getCorTexto(),
-							configuracoes.getCorIndependente());
-				} else {
-					if (tipo == 2) {
-						configuracoes.guardaCores(configuracoes.getCorTag(),
-								colorChooser.getColor(),
-								configuracoes.getCorIndependente());
-					} else {
-						configuracoes.guardaCores(configuracoes.getCorTag(),
-								configuracoes.getCorTexto(),
-								colorChooser.getColor());
-					}
-				}
+                                switch(tipo)
+                                {
+                                    case 1:
+                                        configuracoes.setCorTag(colorChooser.getColor());
+                                        break;
+                                    case 2:
+                                        configuracoes.setCorTexto(colorChooser.getColor());
+                                        break;
+                                    case 3:
+                                        configuracoes.setCorIndependente(colorChooser.getColor());
+                                        break;
+                                    case 4:
+                                        configuracoes.setCorUnidade1(colorChooser.getColor());
+                                        break;
+                                    case 5:
+                                        configuracoes.setCorUnidade2(colorChooser.getColor());
+                                        break;
+                                    case 6:
+                                        configuracoes.setCorEmbutida(colorChooser.getColor());
+                                        break;
+                                    case 7:
+                                        configuracoes.setCorSobreposta(colorChooser.getColor());
+                                        break;
+                                    case 8:
+                                        configuracoes.setCorIndep(colorChooser.getColor());
+                                        break;
+                                }
 
-				Controle.getJanelaPrincipal().getAbaSegmentaca().coloreTags();
+                                if(tipo <= 3)
+                                    Controle.getJanelaPrincipal().getAbaSegmentaca().coloreTags();
+                                else
+                                    Controle.getJanelaPrincipal().getAbaSegmentacaoCores().gerarSegmentacaoCores();
+                                    Controle.getJanelaPrincipal().getAbaSegmentacaoCores().atribuirCores();
 				janelaCor.dispose();
 
 			}
@@ -576,14 +751,14 @@ public class AcaoJanelaPrincipal {
 
 			@Override
 			public void actionPerformed(ActionEvent evt) {
-				JFrame janelaCor = new JFrame();
+				JDialog janelaCor = new JDialog();
 				if (tseg.janelas.JanelaPrincipal.portugues)
 				{
-					janelaCor.setTitle("Cores - Textos Segmentados");
+					janelaCor.setTitle("XML - Textos Segmentados");
 				}
 				else
 				{
-					janelaCor.setTitle("Colors - Segmented Texts");
+					janelaCor.setTitle("XML - Segmented Texts");
 				}
 				janelaCor.setResizable(false);
 				janelaCor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -605,14 +780,14 @@ public class AcaoJanelaPrincipal {
 
 			@Override
 			public void actionPerformed(ActionEvent evt) {
-				JFrame janelaCor = new JFrame();
+				JDialog janelaCor = new JDialog();
 				if (tseg.janelas.JanelaPrincipal.portugues)
 				{
-					janelaCor.setTitle("Cores -  Unidades Independentes");
+					janelaCor.setTitle("XML -  Unidades Independentes");
 				}
 				else
 				{
-					janelaCor.setTitle("Colors - Independent Units");
+					janelaCor.setTitle("XML - Independent Units");
 				}
 				janelaCor.setResizable(false);
 				janelaCor.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -635,7 +810,7 @@ public class AcaoJanelaPrincipal {
 
 			@Override
 			public void actionPerformed(ActionEvent evt) {
-				JFrame janelaCor = new JFrame();
+				JDialog janelaCor = new JDialog();
 				if (tseg.janelas.JanelaPrincipal.portugues)
 				{
 					janelaCor.setTitle("Cores - Unidades Independentes");
@@ -753,11 +928,18 @@ public class AcaoJanelaPrincipal {
 		{
 			fc.setDialogTitle("Save Segmented File...");
 		}
-		int retornoFc = fc.showSaveDialog(null);
+                fc.setAcceptAllFileFilterUsed(false);
+		int retornoFc = fc.showSaveDialog(Controle.getJanelaPrincipal().getFrame());
 
 		if (retornoFc == JFileChooser.APPROVE_OPTION) {
 			File selectedFile = fc.getSelectedFile();
-
+                        String extensao = FiltroExtencoes.retornaExtencao(selectedFile);
+                        
+                        if(extensao == null || !extensao.equals("txt"))
+                        {
+                            selectedFile = new File(selectedFile.getAbsolutePath() + ".txt");
+                        }
+                        
 			String textoSegmentado = Controle.getJanelaPrincipal()
 					.getAbaSegmentaca().getTextoTxaSegmentacao();
 
@@ -785,7 +967,7 @@ public class AcaoJanelaPrincipal {
 		};
 	}
 
-	private JFileChooser getFileChooserCustomizado() {
+	public static JFileChooser getFileChooserCustomizado() {
 		Configuracoes configuracoes = new Configuracoes();
 		JFileChooser fc = new JFileChooser(configuracoes.getDiretorioPadrao());
 
@@ -810,21 +992,4 @@ public class AcaoJanelaPrincipal {
 		return fc;
 	}
         
-        //Metodo que filtra os arquivos de acordo com uma lista de extensoes validas
-        private List<File> filtrarArquivos(File[] arquivos)
-        {
-            List<File> retorno = new ArrayList<File>();
-            int i;
-            FiltroArquivo filtro = new FiltroArquivo();
-            
-            for(i=0; i<arquivos.length; i++)
-            {
-                if(filtro.acceptNoDir(arquivos[i]))
-                {
-                    retorno.add(arquivos[i]);
-                }
-            }
-            
-            return retorno;
-        }
 }

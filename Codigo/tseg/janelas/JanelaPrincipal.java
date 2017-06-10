@@ -71,8 +71,16 @@ public class JanelaPrincipal {
         static private JMenuItem itemPortugues;
         
         static private JMenu menuCores;
+        static private JMenu menuCoresXML;
+        static private JMenuItem itemCorTags;
         static private JMenuItem itemCorIndependente;
         static private JMenuItem itemCorTextoSeg;
+        static private JMenu menuCoresEsquema;
+        static private JMenuItem itemCorUnidade;
+        static private JMenuItem itemCorUnidadeIntercalada;
+        static private JMenuItem itemCorUnidadeEmbutida;
+        static private JMenuItem itemCorUnidadeSobreposta;
+        static private JMenuItem itemCorUnidadeIndependente;
         
         static private JMenu menuSegmentacao;
         static private JMenuItem itemDefUnidade;
@@ -106,6 +114,7 @@ public class JanelaPrincipal {
 		janela.setTitle("T-Seg");
 		janela.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		janela.setLayout(new BorderLayout());
+                janela.setIconImage(janela.getToolkit().getImage(this.getClass().getResource("/imagens/icone_transp.png")));
 
 		janela.addWindowListener(acao.aoFecharJanela());
 
@@ -140,20 +149,25 @@ public class JanelaPrincipal {
         }
 
 	public void mudaAba(int aba) {
-		tbpAbas.setSelectedIndex(aba);
+            tbpAbas.setSelectedIndex(aba);
 	}
 
 	public int getAbaAtual() {
-		return tbpAbas.getSelectedIndex();
+            return tbpAbas.getSelectedIndex();
 	}
 
 	public AbaSegmentacao getAbaSegmentaca() {
-		return abaSegmentacao;
+            return abaSegmentacao;
 	}
 
 	public AbaEstatisticas getAbaEstatisticas() {
-		return abaEstatisticas;
+            return abaEstatisticas;
 	}
+        
+        public AbaSegmentacaoCores getAbaSegmentacaoCores()
+        {
+            return abaSegCores;
+        }
 
 	private void montaMenuBar() {
 		menuBar = new JMenuBar();
@@ -226,19 +240,21 @@ public class JanelaPrincipal {
         }
 
 	private JMenu montaMenuAjuda() {
-		itemSobre = new JMenuItem("Sobre o T-Seg");
-		itemSobre.setMnemonic('b');
-		itemSobre.addActionListener(acao.itemSobre());
 
 		itemManual = new JMenuItem("Manual de Funcionalidades");
 		itemManual.setMnemonic('m');
                 itemManual.setAccelerator(KeyStroke.getKeyStroke("F1"));
 		itemManual.addActionListener(acao.itemManual());
+                
+		itemSobre = new JMenuItem("Sobre o T-Seg");
+		itemSobre.setMnemonic('b');
+		itemSobre.addActionListener(acao.itemSobre());
 
 		menuAjuda = new JMenu("Ajuda");
 		menuAjuda.setMnemonic('u');
-		menuAjuda.add(itemSobre);
 		menuAjuda.add(itemManual);
+                menuAjuda.addSeparator();
+		menuAjuda.add(itemSobre);
 
 		return menuAjuda;
 	}
@@ -259,7 +275,18 @@ public class JanelaPrincipal {
 		menuCores = new JMenu("Cores");
 		menuCores.setMnemonic('c');
 
-		JMenuItem itemCorTags = new JMenuItem("Tags");
+                menuCores.add(montaMenuCoresXML());
+                menuCores.add(montaMenuCoresEsquema());
+                
+		return menuCores;
+	}
+        
+        private JMenu montaMenuCoresXML()
+        {
+                menuCoresXML = new JMenu("XML");
+                menuCoresXML.setMnemonic('X');
+            
+            	itemCorTags = new JMenuItem("Tags");
 		itemCorTags.setMnemonic('a');
 		itemCorTags.addActionListener(acao.itemCorTags());
 
@@ -271,12 +298,46 @@ public class JanelaPrincipal {
 		itemCorIndependente.setMnemonic('i');
 		itemCorIndependente.addActionListener(acao.itemCorIndependente());
 
-		menuCores.add(itemCorTags);
-		menuCores.add(itemCorTextoSeg);
-		menuCores.add(itemCorIndependente);
-
-		return menuCores;
-	}
+		menuCoresXML.add(itemCorTags);
+		menuCoresXML.add(itemCorTextoSeg);
+		menuCoresXML.add(itemCorIndependente);
+                
+                return menuCoresXML;
+        }
+        
+        private JMenu montaMenuCoresEsquema()
+        {
+                menuCoresEsquema = new JMenu("Esquema de Cores");
+                menuCoresEsquema.setMnemonic('E');
+                
+                itemCorUnidade = new JMenuItem("Unidades");
+                itemCorUnidade.setMnemonic('U');
+                itemCorUnidade.addActionListener(acao.itemCorUnidades());
+                
+                itemCorUnidadeIntercalada = new JMenuItem("Unidades (intercaladas)");
+                itemCorUnidadeIntercalada.setMnemonic('t');
+                itemCorUnidadeIntercalada.addActionListener(acao.itemCorUnidades2());
+                
+                itemCorUnidadeEmbutida = new JMenuItem("Unidades embutidas");
+                itemCorUnidadeEmbutida.setMnemonic('e');
+                itemCorUnidadeEmbutida.addActionListener(acao.itemCorUnidadesEmbutidas());
+                
+                itemCorUnidadeSobreposta = new JMenuItem("Segmentos sobrepostos");
+                itemCorUnidadeSobreposta.setMnemonic('S');
+                itemCorUnidadeSobreposta.addActionListener(acao.itemCorUnidadesSobrepostas());
+                
+                itemCorUnidadeIndependente = new JMenuItem("Unidades independentes");
+                itemCorUnidadeIndependente.setMnemonic('i');
+                itemCorUnidadeIndependente.addActionListener(acao.itemCorUnidadesIndependentes());
+                
+                menuCoresEsquema.add(itemCorUnidade);
+                menuCoresEsquema.add(itemCorUnidadeIntercalada);
+                menuCoresEsquema.add(itemCorUnidadeEmbutida);
+                menuCoresEsquema.add(itemCorUnidadeSobreposta);
+                menuCoresEsquema.add(itemCorUnidadeIndependente);
+                
+                return menuCoresEsquema;
+        }
         
         private JMenu montaMenuLingua(){
             
@@ -327,6 +388,7 @@ public class JanelaPrincipal {
             
             itemRemoverUnidade = new JMenuItem("Remover uma unidade");
             itemRemoverUnidade.setMnemonic('R');
+            itemRemoverUnidade.addActionListener(acao.itemRemoverUmaUnidade());
             menuSegmentacao.add(itemRemoverUnidade);
             
             itemRemoverTodasUnidades = new JMenuItem("Remover todas as unidades");
@@ -338,6 +400,7 @@ public class JanelaPrincipal {
             
             itemSegmentarTodos = new JMenuItem("Segmentar todos os arquivos de um diretório");
             itemSegmentarTodos.setMnemonic('S');
+            itemSegmentarTodos.addActionListener(acao.segmentarDiretorio2());
             menuSegmentacao.add(itemSegmentarTodos);
             
             return menuSegmentacao;
@@ -410,7 +473,7 @@ public class JanelaPrincipal {
                             itemRefazer.setText("Redo");
                             itemRefazer.setMnemonic('R');
                             
-                            itemSobre.setText("About TSeg");
+                            itemSobre.setText("About T-Seg");
                             
                             menuAjuda.setText("Help");
                             menuAjuda.setMnemonic('H');
@@ -434,7 +497,7 @@ public class JanelaPrincipal {
                             
                             itemDefUnidade.setText("Define new unit");
                             itemDefUnidadeIndep.setText("Define new independent unit");
-                            itemRemoverUnidade.setText("Remove a unit");
+                            itemRemoverUnidade.setText("Remove an unit");
                             
                             itemRemoverTodasUnidades.setText("Remove all units");
                             itemRemoverTodasUnidades.setMnemonic('a');
@@ -443,6 +506,16 @@ public class JanelaPrincipal {
                             abaSegmentacao.setTextBtnSegAuto("Automatic segmentation","See the options Automatic Segmentation.");
                             itemCorIndependente.setText("Independent Units");
                             itemCorTextoSeg.setText("Segmented Text");
+                            
+                            menuCoresEsquema.setText("Color scheme");
+                            menuCoresEsquema.setMnemonic('C');
+                            itemCorUnidade.setText("Units");
+                            itemCorUnidadeIntercalada.setText("Interleaved units");
+                            itemCorUnidadeSobreposta.setText("Overlapping segments");
+                            itemCorUnidadeEmbutida.setText("Built-in units");
+                            itemCorUnidadeEmbutida.setMnemonic('B');
+                            itemCorUnidadeIndependente.setText("Independent units");
+                            
                             tbpAbas.setTitleAt(0, "Segmentation - XML");
                             tbpAbas.setTitleAt(1, "Statistics");
                             tbpAbas.setMnemonicAt(0, 'g');
@@ -450,6 +523,7 @@ public class JanelaPrincipal {
                             tbpAbas.setTitleAt(2, "Segmentation - Colors");
                             tbpAbas.setMnemonicAt(2, 'a');
                             abaSegCores.setTextButton("Generate color scheme ", "Generate a representation of the color segmentation");
+                            
 					}
 					else
 					{
@@ -472,7 +546,7 @@ public class JanelaPrincipal {
                         itemRefazer.setText("Refazer");
                         itemRefazer.setMnemonic('R');
                         
-                        itemSobre.setText("Sobre o TSeg");
+                        itemSobre.setText("Sobre o T-Seg");
                         
                         menuAjuda.setText("Ajuda");
                         menuAjuda.setMnemonic('u');
@@ -505,6 +579,16 @@ public class JanelaPrincipal {
                         abaSegmentacao.setTextBtnSegAuto("Segmentação Automática","Veja as opções de segmentação automática.");
                         itemCorIndependente.setText("Unidades Independentes");
                         itemCorTextoSeg.setText("Texto Segmentado");
+                        
+                        menuCoresEsquema.setText("Esquema de cores");
+                        menuCoresEsquema.setMnemonic('E');
+                        itemCorUnidade.setText("Unidades");
+                        itemCorUnidadeIntercalada.setText("Unidades independentes");
+                        itemCorUnidadeSobreposta.setText("Segmentos sobrepostos");
+                        itemCorUnidadeEmbutida.setText("Unidades embutidas");
+                        itemCorUnidadeEmbutida.setMnemonic('e');
+                        itemCorUnidadeIndependente.setText("Unidades independentes");
+                        
                         tbpAbas.setTitleAt(0, "Segmentação - XML");
                         tbpAbas.setTitleAt(1, "Estatísticas");
                         tbpAbas.setTitleAt(2, "Segmentação - Cores");
@@ -513,6 +597,8 @@ public class JanelaPrincipal {
                         tbpAbas.setMnemonicAt(2, 'a');
                         abaSegCores.setTextButton("Gerar um esquema de cores", "Gere uma representação por cores da segmentação");
 					}
+                                        
+                        abaSegCores.traduzirLegenda(portugues);
 			}
                 };
         }
@@ -549,5 +635,20 @@ public class JanelaPrincipal {
         public void habilitarRefazer(boolean status)
         {
             this.itemRefazer.setEnabled(status);
+        }
+        
+        public boolean isPortugues()
+        {
+            return this.portugues;
+        }
+        
+        public void ativar(boolean arg)
+        {
+            this.janela.setEnabled(arg);
+        }
+        
+        public JFrame getFrame()
+        {
+            return this.janela;
         }
 }

@@ -65,8 +65,7 @@ public class AbaSegmentacao {
 
 		String tooltip = "Veja as opções de Segmentação Automática.";
 		btnSegmentacaoAutomatica.setToolTipText(tooltip);
-		btnSegmentacaoAutomatica.addActionListener(acao
-				.btnSegmentacaoAutomaticaActionListener());
+		//btnSegmentacaoAutomatica.addActionListener(acao.btnSegmentacaoAutomaticaActionListener());
 
 		pnlBotoes = new JPanel();
 		pnlBotoes.add(btnSegmentacaoAutomatica);

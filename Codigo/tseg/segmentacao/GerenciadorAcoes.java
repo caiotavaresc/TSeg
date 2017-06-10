@@ -11,6 +11,9 @@ public class GerenciadorAcoes {
     public static Stack<String> pilhaRefazerTexto = new Stack<String>();
     public static Stack<ControladorUnidades> pilhaRefazerContexto = new Stack<ControladorUnidades>();
     
+    private static ControladorUnidades controladorContexto;
+    private static String textoContexto;
+    
     public static void guardarContexto()
     {
         ControladorUnidades contr = Controle.getControladorUnidades().clone();
@@ -28,6 +31,9 @@ public class GerenciadorAcoes {
     
     public static void desfazer()
     {
+        //Voltar à aba principal
+        voltarAbaPrincipal();
+        
         ControladorUnidades contexto = pilhaDesfazerContexto.pop();
         String texto = pilhaDesfazerTexto.pop();
         
@@ -46,10 +52,16 @@ public class GerenciadorAcoes {
         
         //Habilitar o botão de refazer
         Controle.getJanelaPrincipal().habilitarRefazer(true);
+        
+        //Colocar o cursor no início do texto
+        Controle.setCursorInicioTexto();
     }
     
     public static void refazer()
     {
+        //Voltar à aba principal
+        voltarAbaPrincipal();
+        
         ControladorUnidades contexto = pilhaRefazerContexto.pop();
         String texto = pilhaRefazerTexto.pop();
         
@@ -68,6 +80,9 @@ public class GerenciadorAcoes {
         
         //Habilitar o botão de desfazer na janela principal
         Controle.getJanelaPrincipal().habilitarDesfazer(true);
+        
+        //Colocar o cursor no início do texto
+        Controle.setCursorInicioTexto();
     }
     
     public static void limparContexto()
@@ -82,4 +97,21 @@ public class GerenciadorAcoes {
         Controle.getJanelaPrincipal().habilitarRefazer(false);
     }
     
+    public static void guardarContextoGeral()
+    {
+        controladorContexto = Controle.getControladorUnidades().clone();
+        textoContexto = String.valueOf(Controle.getJanelaPrincipal().getAbaSegmentaca().getTextoTxaSegmentacao());
+    }
+    
+    public static void refazerContextoGeral()
+    {
+        Controle.setControladorUnidades(controladorContexto);
+        Controle.getJanelaPrincipal().getAbaSegmentaca().setTextoTxaSegmentacao(textoContexto);
+    }
+    
+    public static void voltarAbaPrincipal()
+    {
+        if(Controle.getJanelaPrincipal().getAbaAtual() != 0)
+            Controle.getJanelaPrincipal().mudaAba(0);
+    }
 }
